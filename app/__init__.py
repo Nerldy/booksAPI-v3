@@ -13,7 +13,10 @@ def books_list():
 	:return: All books
 	"""
 
-	return jsonify({"books": books_collection}), 200  # return dummy book list
+	if books_collection:
+		return jsonify({"books": books_collection}), 200  # return dummy book list
+
+	return jsonify({"message": "No books available"})
 
 
 @app.route('/books', methods=['POST'])
