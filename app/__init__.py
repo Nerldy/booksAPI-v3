@@ -44,7 +44,21 @@ def create_book():
 @app.route('/books/<book_id>', methods=['GET', 'PUT', 'DELETE'])
 def book_id_item(book_id):
 	if request.method == 'PUT':
-		pass
+		req_data = request.get_json()
+		book = next(filter(lambda x: x['isbn'] == book_id, books_collection), None)  # search for book in collection
+
+		if book is None:
+			book = Book(req_data['title'], req_data['isbn'])
+
+			for author in req_data['author']:
+				book.set_author(author)  # create author list
+
+			books_collection.append(book.serialize())  # add book to dummy book list
+
+			return jsonify({"message": "Book has been created"})
+		else:
+			book.update(req_data)
+			return jsonify({"message": "Book updated"})
 
 
 @app.route('/users/books/<book_id>', methods=['POST'])
