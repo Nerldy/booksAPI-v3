@@ -4,10 +4,10 @@ import datetime
 
 class User:
 
-	def __init__(self, user_name=None, user_user_email=None, password=None):
+	def __init__(self, user_name=None, user_email=None, password=None):
 		self.id = uuid.uuid4()
 		self.user_name = user_name
-		self.user_email = user_user_email
+		self.user_email = user_email
 		self.password = password
 		self.date_created = datetime.datetime.now()
 
