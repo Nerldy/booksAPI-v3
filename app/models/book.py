@@ -4,7 +4,7 @@ import datetime
 
 class Book:
 
-	def __init__(self, title=None, isbn=None):
+	def __init__(self, title="", isbn=""):
 		self.id = uuid.uuid4()
 		self.title = title
 		self.isbn = isbn
@@ -28,6 +28,7 @@ class Book:
 
 	def serialize(self):
 		return {
+			"id": self.id,
 			"title": self.title,
 			"isbn": self.isbn,
 			"author": self.author,
