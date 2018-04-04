@@ -1,9 +1,19 @@
-from flask import Flask, request, Response, jsonify, json
+from flask import Flask, request, Response, jsonify, json, make_response
 from app.models.book import Book
 from app.models.user import User
+from flask.ext.bcrypt import Bcrypt
 
 app = Flask(__name__)
-books_collection = []
+app.secret_key = 'test'
+bcrypt = Bcrypt(app)
+
+
+"""
+-------------
+DUMMY OBJECTS
+"""
+books_collection = []  # initialize empty books list
+users_collection = []  # initialize empty users list
 
 
 @app.route('/books')
@@ -71,3 +81,30 @@ def book_id_item(book_id):
 @app.route('/users/books/<book_id>', methods=['POST'])
 def user_borrow_book(book_id):
 	return 'Borrow' + book_id
+
+
+"""
+-----------------
+AUTH
+
+"""
+
+
+@app.route('/login', methods=['POST'])
+def api_login():
+	pass
+
+
+@app.route('/register', methods=['POST'])
+def api_register():
+	pass
+
+
+@app.route('/logout', methods=['POST'])
+def api_logout():
+	pass
+
+
+@app.route('/reset-password', methods=['POST'])
+def reset_password():
+	pass
