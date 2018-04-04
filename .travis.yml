@@ -6,7 +6,8 @@ install:
   - pip install -r requirements.txt
 
 script:
-  - nosetests --with-coverage
+  - pytest
 
 after_success:
+  - codecov
   - coveralls
