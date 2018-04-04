@@ -27,6 +27,20 @@ class HelloBooksAPITestCase(unittest.TestCase):
 		resp = self.app.get('/books')
 		self.assertEqual(resp.status_code, 200)
 
+	def test_create_book(self):
+		"""
+		Tests Create book API endpoint
+		Asserts 201 Created Status Code Response
+		"""
+
+		payload = {
+			"title": "New Book",
+			"author": "New Author",
+			"isbn": "389837"
+		}
+
+		res = self.app.post('/books', data=json.dumps(payload))
+		return self.assertEqual(res.status_code, 201)
 
 
 if __name__ == '__main__':
