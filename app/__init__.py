@@ -103,7 +103,7 @@ def book_id_item(book_id):
 		if request.method == 'DELETE':
 			global books_collection
 			books_collection = list(filter(lambda x: x["id"] != book_id, books_collection))
-			return jsonify({"message": "book deleted"})
+			return jsonify({"message": "book deleted"}), 204
 
 		if request.method == 'PUT':
 
