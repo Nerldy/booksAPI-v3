@@ -33,14 +33,34 @@ class HelloBooksAPITestCase(unittest.TestCase):
 		Asserts 201 Created Status Code Response
 		"""
 		#
-		# payload = {
-		# 	"title": "New Book",
-		# 	"author": "New Author",
-		# 	"isbn": "389837"
-		# }
+		payload = {
+			"title": "New Book",
+			"author": "New Author",
+			"isbn": "12345678901"
+		}
 
-		res = self.app.post('/books')
+		res = self.app.post('/books', data=json.dumps(payload), content_type="application/json")
 		return self.assertEqual(res.status_code, 201)
+
+	def test_no_book_400_bad_request_error(self):
+		"""
+		test empty object
+		:return: 400
+		"""
+		payload = {}
+
+		res = self.app.post('/books', data=json.dumps(payload), content_type="application/json")
+		return self.assertEqual(res.status_code, 400)
+
+	def test_create_book_empty_object_raises_key_error(self):
+		"""
+		tests key error is raised
+		:return: KeyError
+		"""
+		payload = {}
+
+		res = self.app.post('/books', data=json.dumps(payload), content_type="application/json")
+		return self.assertRaises(KeyError)
 
 
 if __name__ == '__main__':
