@@ -6,6 +6,7 @@ from flask_jwt import JWT, jwt_required
 from .models.security import authenticate, identity
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 app.secret_key = 'test'
 # bcrypt = Bcrypt(app)
 jwt = JWT(app, authenticate, identity)
@@ -39,30 +40,34 @@ def create_book():
 	:return: Book created
 	"""
 	req_data = request.get_json()  # turn json into Python objects
-	isbn_str = str(req_data['isbn'])
 
-	if (req_data['title'] == "") or (req_data['title'].isspace()):  # check title is not empty
-		return jsonify({"message": "Title can't be empty"}), 400
+	try:
+		isbn_str = str(req_data['isbn'])
 
-	if (req_data['isbn'] == "") or (req_data['isbn'].isspace()):  # check title is not empty
-		return jsonify({"message": "isbn can't be empty"}), 400
+		if (req_data['title'] == "") or (req_data['title'].isspace()):  # check title is not empty
+			return jsonify({"message": "Title can't be empty"}), 400
 
-	if (len(isbn_str) < 10) or (len(isbn_str) > 15):  # confirm length of isbn is 10 - 15
-		return jsonify({"message": "isbn number must be between 10 - 15 characters"})
+		if (req_data['isbn'] == "") or (req_data['isbn'].isspace()):  # check title is not empty
+			return jsonify({"message": "isbn can't be empty"}), 400
 
-	if isinstance(req_data['author'], list):  # confirm author is a list type
-		print(req_data['author'])
-		for book in books_collection:
-			if book["isbn"] == req_data["isbn"]:  # check if book with the same ID number exists
-				return jsonify({"message": 'Book already exists'}), 400  # return this if book exists
+		if (len(isbn_str) < 10) or (len(isbn_str) > 15):  # confirm length of isbn is 10 - 15
+			return jsonify({"message": "isbn number must be between 10 - 15 characters"})
 
-		book = Book(req_data['title'], req_data["isbn"])  # create book
+		if isinstance(req_data['author'], (list, str)):  # confirm author is a list type
+			print(req_data['author'])
+			for book in books_collection:
+				if book["isbn"] == req_data["isbn"]:  # check if book with the same ID number exists
+					return jsonify({"message": 'Book already exists'}), 400  # return this if book exists
 
-		book.set_author(req_data['author'])  # create author list
+			book = Book(req_data['title'], req_data["isbn"])  # create book
 
-		books_collection.append(book.serialize())  # add book to dummy book list
+			book.set_author(req_data['author'])  # create author list
 
-		return jsonify({"message": "Book has been created"}), 201
+			books_collection.append(book.serialize())  # add book to dummy book list
+
+			return make_response(jsonify({"message": "Book has been created"}), 201)
+	except KeyError:
+		return jsonify({"message": "Couldn't understand your message, please try again"}), 400
 
 	else:
 		return jsonify({"message": "Author must be a list"})
@@ -148,10 +153,10 @@ AUTH
 """
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST'])
 @jwt_required()
 def api_login():
-	pass
+	return jsonify("Login")
 
 
 @app.route('/register', methods=['POST'])
