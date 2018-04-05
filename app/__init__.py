@@ -53,7 +53,8 @@ def create_book():
 		if (len(isbn_str) < 10) or (len(isbn_str) > 15):  # confirm length of isbn is 10 - 15
 			return jsonify({"message": "isbn number must be between 10 - 15 characters"})
 
-		if isinstance(req_data['author'], (list, str)):  # confirm author is a list type
+		if isinstance(req_data['author'], (list, str)) and (
+				req_data['author'] != "" or req_data['author'].isspace()):  # confirm author is a list type
 			print(req_data['author'])
 			for book in books_collection:
 				if book["isbn"] == req_data["isbn"]:  # check if book with the same ID number exists
@@ -70,7 +71,7 @@ def create_book():
 		return jsonify({"message": "Couldn't understand your message, please try again"}), 400
 
 	else:
-		return jsonify({"message": "Author must be a list"})
+		return jsonify({"message": "Author must be a list and can't be empty"})
 
 
 @app.route('/books/<book_id>', methods=['GET', 'PUT', 'DELETE'])
