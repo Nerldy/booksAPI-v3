@@ -9,6 +9,7 @@ class User:
 		self.user_name = user_name
 		self.user_email = user_email
 		self.password = password
+		self.is_admin = False
 		self.date_created = datetime.datetime.now()
 
 	def get_id(self):
@@ -29,5 +30,7 @@ class User:
 	def serialize(self):
 		return {
 			"user_name": self.user_name,
-			"user_email": self.user_email
+			"id": self.id,
+			"user_email": self.user_email,
+			"is_admin": self.is_admin
 		}
