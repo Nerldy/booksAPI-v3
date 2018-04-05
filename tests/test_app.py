@@ -12,7 +12,7 @@ class HelloBooksAPITestCase(unittest.TestCase):
 		"""sets up app"""
 		app.testing = True
 		self.app = app.test_client()
-		self.book = Book(title='The Wave Rain', isbn='A5-45CKWELO556-998')
+		self.book = Book(title='The Wave Rain', isbn='1234567890')
 
 	def tearDown(self):
 		"""removes app"""
@@ -140,7 +140,13 @@ class HelloBooksAPITestCase(unittest.TestCase):
 
 	def test_get_all_books_returns_books_not_available(self):
 		res = self.app.get('/books')
-		assert b"No books available" in res.data
+		one = len(res.data) > 0
+		return self.assertEqual(one, True)
+
+	def test_delete_book_returns_success_message(self):
+		book_id = self.book.get_book_id()
+		res = self.app.delete('/books/' + book_id)
+		assert b"book deleted" in res.data
 
 
 if __name__ == '__main__':
