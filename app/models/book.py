@@ -18,7 +18,7 @@ class Book:
 		return self.title
 
 	def set_author(self, name):
-		self.author.append(name)
+		self.author = name
 
 	def get_author(self):
 		return self.author
