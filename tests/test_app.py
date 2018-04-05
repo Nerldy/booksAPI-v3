@@ -32,14 +32,14 @@ class HelloBooksAPITestCase(unittest.TestCase):
 		Tests Create book API endpoint
 		Asserts 201 Created Status Code Response
 		"""
+		#
+		# payload = {
+		# 	"title": "New Book",
+		# 	"author": "New Author",
+		# 	"isbn": "389837"
+		# }
 
-		payload = {
-			"title": "New Book",
-			"author": "New Author",
-			"isbn": "389837"
-		}
-
-		res = self.app.post('/books', data=json.dumps(payload))
+		res = self.app.post('/books')
 		return self.assertEqual(res.status_code, 201)
 
 
