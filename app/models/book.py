@@ -4,7 +4,7 @@ import datetime
 
 class Book:
 
-	def __init__(self, title="", isbn=""):
+	def __init__(self, title, isbn):
 		self.id = uuid.uuid4().hex
 		self.title = title
 		self.isbn = isbn
