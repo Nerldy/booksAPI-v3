@@ -1,26 +1,10 @@
 from .user import User
 
-users = [
-	User('bob', 'bob@mail.com', '123')
-]
+users = [User('bob', 'bob@mail.com', '123')]  # creates a dummy user
 
-username_mapping = {
-	"bob": {
-		"id": 1,
-		"user_name": "bob",
-		"password": 123,
-		"email": "user@email.com"
-	}
-}
+username_mapping = {u.user_name: u for u in users}  # creates a user mapping object using the user's name
 
-user_id_mapping = {
-	1: {
-		"id": 1,
-		"user_name": "bob",
-		"password": 123,
-		"email": "user@email.com"
-	}
-}
+user_id_mapping = {u.id: u for u in users}  # creates a user mapping object using the user's id
 
 
 def authenticate(username, password):

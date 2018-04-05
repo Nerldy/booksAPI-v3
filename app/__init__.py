@@ -6,6 +6,7 @@ from flask_jwt import JWT, jwt_required
 from .models.security import authenticate, identity
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 app.secret_key = 'test'
 # bcrypt = Bcrypt(app)
 jwt = JWT(app, authenticate, identity)
@@ -14,14 +15,15 @@ jwt = JWT(app, authenticate, identity)
 -------------
 DUMMY OBJECTS
 """
-books_collection = []  # initialize empty books list
-users_collection = []  # initialize empty users list
+books_collection = []  # all books holder
+users_collection = []  # all users holder
+borrowed_books_collection = []  # borrowed books holder
 
 
 @app.route('/books')
 def books_list():
 	"""
-
+	GET /books
 	:return: All books
 	"""
 
@@ -34,41 +36,51 @@ def books_list():
 @app.route('/books', methods=['POST'])
 def create_book():
 	"""
-
+	POST /books
 	:return: Book created
 	"""
 	req_data = request.get_json()  # turn json into Python objects
-	isbn_str = str(req_data['isbn'])
 
-	if (req_data['title'] == "") or (req_data['title'].isspace()):  # check title is not empty
-		return jsonify({"message": "Title can't be empty"}), 400
+	try:
+		isbn_str = str(req_data['isbn'])
 
-	if (req_data['isbn'] == "") or (req_data['isbn'].isspace()):  # check title is not empty
-		return jsonify({"message": "isbn can't be empty"}), 400
+		if (req_data['title'] == "") or (req_data['title'].isspace()):  # check title is not empty
+			return jsonify({"message": "Title can't be empty"}), 400
 
-	if (len(isbn_str) < 10) or (len(isbn_str) > 15):  # confirm length of isbn is 10 - 15
-		return jsonify({"message": "isbn number must be between 10 - 15 characters"})
+		if (req_data['isbn'] == "") or (req_data['isbn'].isspace()):  # check title is not empty
+			return jsonify({"message": "isbn can't be empty"}), 400
 
-	if isinstance(req_data['author'], list):  # confirm author is a list type
-		for book in books_collection:
-			if book["isbn"] == req_data["isbn"]:  # check if book with the same ID number exists
-				return jsonify({"message": 'Book already exists'}), 400  # return this if book exists
+		if (len(isbn_str) < 10) or (len(isbn_str) > 15):  # confirm length of isbn is 10 - 15
+			return jsonify({"message": "isbn number must be between 10 - 15 characters"})
 
-		book = Book(req_data['title'], req_data["isbn"])  # create book
+		if isinstance(req_data['author'], (list, str)) and (
+				req_data['author'] != "" or req_data['author'].isspace()):  # confirm author is a list type
+			print(req_data['author'])
+			for book in books_collection:
+				if book["isbn"] == req_data["isbn"]:  # check if book with the same ID number exists
+					return jsonify({"message": 'Book already exists'}), 400  # return this if book exists
 
-		for author in req_data['author']:
-			book.set_author(author)  # create author list
+			book = Book(req_data['title'], req_data["isbn"])  # create book
 
-		books_collection.append(book.serialize())  # add book to dummy book list
+			book.set_author(req_data['author'])  # create author list
 
-		return jsonify({"message": "Book has been created"}), 201
+			books_collection.append(book.serialize())  # add book to dummy book list
+
+			return make_response(jsonify({"message": "Book has been created"}), 201)
+	except KeyError:
+		return jsonify({"message": "Couldn't understand your message, please try again"}), 400
 
 	else:
-		return jsonify({"message": "Author must be a list"})
+		return jsonify({"message": "Author must be a list and can't be empty"})
 
 
 @app.route('/books/<book_id>', methods=['GET', 'PUT', 'DELETE'])
 def book_id_item(book_id):
+	"""
+	GET, POST, DELETE to/from book collection
+	:param book_id:
+	:return: 200, 400, 404
+	"""
 	if book_id.isalnum():  # make sure book_id is web safe
 
 		if request.method == 'DELETE':
@@ -77,14 +89,31 @@ def book_id_item(book_id):
 			return jsonify({"message": "book deleted"})
 
 		if request.method == 'PUT':
-			req_data = request.get_json()
-			book = next(filter(lambda x: x["id"] == book_id, books_collection), None)  # search for book in collection
 
-			if book is None:
-				return jsonify({"message": "Book does not exist"})
+			req_data = request.get_json()  # turn json into Python objects
+			isbn_str = str(req_data['isbn'])  # turn isbn into a string
+
+			if (req_data['title'] == "") or (req_data['title'].isspace()):  # check title is not empty
+				return jsonify({"message": "Title can't be empty"}), 400
+
+			if (req_data['isbn'] == "") or (req_data['isbn'].isspace()):  # check title is not empty
+				return jsonify({"message": "isbn can't be empty"}), 400
+
+			if (len(isbn_str) < 10) or (len(isbn_str) > 15):  # confirm length of isbn is 10 - 15
+				return jsonify({"message": "isbn number must be between 10 - 15 characters"})
+
+			if isinstance(req_data['author'], list):  # confirm author is a list type
+				book = next(filter(lambda x: x["id"] == book_id, books_collection),
+							None)  # search for book in collection
+
+				if book is None:
+					return jsonify({"message": "Book does not exist"})
+				else:
+					book.update(req_data)  # update book
+					return jsonify({"message": "Book updated"})
+
 			else:
-				book.update(req_data)
-				return jsonify({"message": "Book updated"})
+				return jsonify({"message": "Author must be a list"})
 
 		else:
 			# GET function will run here
@@ -93,14 +122,29 @@ def book_id_item(book_id):
 			if book is None:
 				return jsonify({"message": "Book does not exist"}), 404
 
-			return jsonify({'book': book}), 200
+			return jsonify({'book': book})
 
 	return jsonify({"message": "You must use safe characters"})
 
 
 @app.route('/users/books/<book_id>', methods=['POST'])
 def user_borrow_book(book_id):
-	return 'Borrow' + book_id
+	"""
+	POST to user collection if book exists in the book collection
+	:param book_id:
+	:return: 200, 404
+	"""
+	if book_id.isalnum():  # make sure book_id is web safe
+
+		book = next(filter(lambda x: x["id"] == book_id, books_collection), None)
+		if book is None:
+			return jsonify({"message": "Book does not exist"}), 404
+
+		borrowed_books_collection.append(book)
+
+		return jsonify({"added book to your borrowed list": borrowed_books_collection})
+
+	return jsonify({"message": "You must use safe characters"}), 404
 
 
 """
@@ -110,10 +154,10 @@ AUTH
 """
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST'])
 @jwt_required()
 def api_login():
-	pass
+	return jsonify("Login")
 
 
 @app.route('/register', methods=['POST'])
