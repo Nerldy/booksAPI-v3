@@ -6,7 +6,7 @@ class BookTestCase(unittest.TestCase):
 	"""this class tests Book class"""
 
 	def setUp(self):
-		self.book = Book()
+		self.book = Book('tester book', '1234567890')
 
 	def test_title_is_not_none(self):
 		res = self.book.title
@@ -23,6 +23,7 @@ class BookTestCase(unittest.TestCase):
 	def test_id_is_hex(self):
 		res = isinstance(self.book.id, int)
 		self.assertEqual(res, False)
+
 
 
 if __name__ == '__main__':
