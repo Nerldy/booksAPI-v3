@@ -173,26 +173,51 @@ AUTH
 
 @app.route('/auth/login', methods=['POST'])
 def api_login():
-	pass
+	username = request.json.get('user_name')
+	password = request.json.get("password")
+	email = request.json.get("user_email")
+
+	if username is None or password is None or email is None:
+		return jsonify({"message": "Make sure username, password and email fields are provided "}), 400
+
+	if (username == "" or username.isspace()) or (email == "" or email.isspace()):
+		return jsonify({"message": "username and/or email fields cannot be empty"})
+
+	if len(password) < 6:
+		return jsonify({"message": "Password must be longer than 8 characters"})
+
+	for user in users_collection:
+		if user['user_name'] == username and user['user_email'] == email and user.verify_password(password):
+			return jsonify({"message": "logged in", "credentials": user})
+
+	return jsonify({"message": "username/email/password does not match or please create a new account"})
 
 
-@app.route('/register', methods=['POST'])
+@app.route('/auth/register', methods=['POST'])
 def api_register():
 	username = request.json.get('user_name')
 	password = request.json.get("password")
 	email = request.json.get("user_email")
 
-	if username is None or password is None:
-		abort(400)
+	if username is None or password is None or email is None:
+		return jsonify({"message": "Make sure username, password and email fields are provided "}), 400
+
+	if (username == "" or username.isspace()) or (email == "" or email.isspace()):
+		return jsonify({"message": "username and/or email fields cannot be empty"})
+
+	if len(password) < 6:
+		return jsonify({"message": "Password must be longer than 8 characters"})
 
 	for user in users_collection:
 		if user['user_name'] == username:
-			abort(404)
-		else:
-			new_user = User(username, email)
-			new_user.set_password(password)
-			users_collection.append(new_user)
-			return jsonify({"message": f"hello {username}. Your account has been created"})
+			return jsonify({"message": "user already exists"}), 400
+		if user['user_email'] == email:
+			return jsonify({"message": "Email already exists"}), 400
+
+	new_user = User(username, email)
+	new_user.set_password(password)
+	users_collection.append(new_user.serialize())
+	return jsonify({"message": f"hello {username}. Your account has been created", "details": users_collection}), 201
 
 
 @app.route('/logout', methods=['POST'])
