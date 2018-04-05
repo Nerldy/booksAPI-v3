@@ -1,16 +1,23 @@
 import uuid
 import datetime
+from passlib.apps import custom_app_context as pwd_context
 
 
 class User:
 
-	def __init__(self, user_name=None, user_email=None, password=None):
-		self.id = uuid.uuid4()
+	def __init__(self, user_name, user_email):
+		self.id = uuid.uuid4().hex
 		self.user_name = user_name
 		self.user_email = user_email
-		self.password = password
+		self.password = None
 		self.is_admin = False
 		self.date_created = datetime.datetime.now()
+
+	def set_password(self, password):
+		self.password = pwd_context.encrypt(password)
+
+	def verify_password(self, password):
+		return pwd_context.verify(password, self.password)
 
 	def get_id(self):
 		return self.id
