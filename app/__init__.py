@@ -1,23 +1,40 @@
-from flask import Flask, request, Response, jsonify, json, make_response
+from flask import Flask, request, Response, jsonify, json, make_response, abort
 from app.models.book import Book
 from app.models.user import User
 # from flask.ext.bcrypt import Bcrypt
-from flask_jwt import JWT, jwt_required
-from .models.security import authenticate, identity
+from flask_jwt import JWT, jwt_required, current_identity
+from werkzeug.security import safe_str_cmp
 
-app = Flask(__name__)
-app.url_map.strict_slashes = False
-app.secret_key = 'test'
-# bcrypt = Bcrypt(app)
-jwt = JWT(app, authenticate, identity)
+
+def authenticate(username, password):
+	user = username_table.get(username, None)
+	if user and safe_str_cmp(user.password.encode('utf-8'), password.encode('utf-8')):
+		return user
+
+
+def identity(payload):
+	user_id = payload['identity']
+	return userid_table.get(user_id, None)
+
 
 """
 -------------
 DUMMY OBJECTS
 """
+users = [
+	User(user_name='user1', user_email='user1@mail.com').set_password("1234"),
+	User(user_name='user2', user_email='user2@mail.com').set_password("5678")
+]
+
 books_collection = []  # all books holder
 users_collection = []  # all users holder
 borrowed_books_collection = []  # borrowed books holder
+
+app = Flask(__name__)
+app.url_map.strict_slashes = False
+app.config['SECRET_KEY'] = 'super-secret'
+
+jwt = JWT(app, authenticate, identity)
 
 
 @app.route('/books')
@@ -155,14 +172,27 @@ AUTH
 
 
 @app.route('/auth/login', methods=['POST'])
-@jwt_required()
 def api_login():
-	return jsonify("Login")
+	pass
 
 
 @app.route('/register', methods=['POST'])
 def api_register():
-	pass
+	username = request.json.get('user_name')
+	password = request.json.get("password")
+	email = request.json.get("user_email")
+
+	if username is None or password is None:
+		abort(400)
+
+	for user in users_collection:
+		if user['user_name'] == username:
+			abort(404)
+		else:
+			new_user = User(username, email)
+			new_user.set_password(password)
+			users_collection.append(new_user)
+			return jsonify({"message": f"hello {username}. Your account has been created"})
 
 
 @app.route('/logout', methods=['POST'])
