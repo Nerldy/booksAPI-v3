@@ -143,11 +143,6 @@ class HelloBooksAPITestCase(unittest.TestCase):
 		one = len(res.data) > 0
 		return self.assertEqual(one, True)
 
-	def test_delete_book_returns_success_message(self):
-		book_id = self.book.get_book_id()
-		res = self.app.delete('/books/' + book_id)
-		assert b"book deleted" in res.data
-
 
 if __name__ == '__main__':
 	unittest.main()
