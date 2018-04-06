@@ -187,11 +187,11 @@ def api_login():
 	if (username == "" or username.isspace()) or (email == "" or email.isspace()):
 		return jsonify({"message": "username and/or email fields cannot be empty"}), 400
 
-	if len(password) < 6:
+	if len(password) < 6 or password.isspace():
 		return jsonify({"message": "Password must be longer than 8 characters"}), 400
 
 	for user in users_collection:
-		if user['user_name'] == username and user['user_email'] == email and user.verify_password(password):
+		if user['user_name'] == username and user['user_email'] == email:
 			return jsonify({"message": "logged in", "credentials": user})
 
 	return jsonify({"message": "username/email/password does not match or please create a new account"})
@@ -213,7 +213,7 @@ def api_register():
 	if (username == "" or username.isspace()) or (email == "" or email.isspace()):
 		return jsonify({"message": "username and/or email fields cannot be empty"}), 400
 
-	if len(password) < 6:
+	if len(password) < 6 or password.isspace():
 		return jsonify({"message": "Password must be longer than 8 characters"}), 400
 
 	for user in users_collection:
