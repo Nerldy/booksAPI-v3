@@ -1,23 +1,40 @@
-from flask import Flask, request, Response, jsonify, json, make_response
+from flask import Flask, request, Response, jsonify, json, make_response, abort
 from app.models.book import Book
 from app.models.user import User
 # from flask.ext.bcrypt import Bcrypt
-from flask_jwt import JWT, jwt_required
-from .models.security import authenticate, identity
+from flask_jwt import JWT, jwt_required, current_identity
+from werkzeug.security import safe_str_cmp
 
-app = Flask(__name__)
-app.url_map.strict_slashes = False
-app.secret_key = 'test'
-# bcrypt = Bcrypt(app)
-jwt = JWT(app, authenticate, identity)
+
+def authenticate(username, password):
+	user = username_table.get(username, None)
+	if user and safe_str_cmp(user.password.encode('utf-8'), password.encode('utf-8')):
+		return user
+
+
+def identity(payload):
+	user_id = payload['identity']
+	return userid_table.get(user_id, None)
+
 
 """
 -------------
 DUMMY OBJECTS
 """
+users = [
+	User(user_name='user1', user_email='user1@mail.com').set_password("1234"),
+	User(user_name='user2', user_email='user2@mail.com').set_password("5678")
+]
+
 books_collection = []  # all books holder
 users_collection = []  # all users holder
 borrowed_books_collection = []  # borrowed books holder
+
+app = Flask(__name__)
+app.url_map.strict_slashes = False
+app.config['SECRET_KEY'] = 'super-secret'
+
+jwt = JWT(app, authenticate, identity)
 
 
 @app.route('/books')
@@ -86,7 +103,7 @@ def book_id_item(book_id):
 		if request.method == 'DELETE':
 			global books_collection
 			books_collection = list(filter(lambda x: x["id"] != book_id, books_collection))
-			return jsonify({"message": "book deleted"})
+			return jsonify({"message": "book deleted"}), 204
 
 		if request.method == 'PUT':
 
@@ -155,19 +172,75 @@ AUTH
 
 
 @app.route('/auth/login', methods=['POST'])
-@jwt_required()
 def api_login():
-	return jsonify("Login")
+	"""
+	user login function
+	:return: 200 or 400
+	"""
+	username = request.json.get('user_name')
+	password = request.json.get("password")
+	email = request.json.get("user_email")
+
+	if username is None or password is None or email is None:
+		return jsonify({"message": "Make sure username, password and email fields are provided "}), 400
+
+	if (username == "" or username.isspace()) or (email == "" or email.isspace()):
+		return jsonify({"message": "username and/or email fields cannot be empty"}), 400
+
+	if len(password) < 6 or password.isspace():
+		return jsonify({"message": "Password must be longer than 8 characters"}), 400
+
+	for user in users_collection:
+		if user['user_name'] == username and user['user_email'] == email:
+			return jsonify({"message": "logged in", "credentials": user})
+
+	return jsonify({"message": "username/email/password does not match or please create a new account"})
 
 
-@app.route('/register', methods=['POST'])
+@app.route('/auth/register', methods=['POST'])
 def api_register():
-	pass
+	"""
+	register user function
+	:return: 200 or 400
+	"""
+	username = request.json.get('user_name')
+	password = request.json.get("password")
+	email = request.json.get("user_email")
+
+	if username is None or password is None or email is None:
+		return jsonify({"message": "Make sure username, password and email fields are provided "}), 400
+
+	if (username == "" or username.isspace()) or (email == "" or email.isspace()):
+		return jsonify({"message": "username and/or email fields cannot be empty"}), 400
+
+	if len(password) < 6 or password.isspace():
+		return jsonify({"message": "Password must be longer than 8 characters"}), 400
+
+	for user in users_collection:
+		if user['user_name'] == username:
+			return jsonify({"message": "user already exists"}), 400
+		if user['user_email'] == email:
+			return jsonify({"message": "Email already exists"}), 400
+
+	new_user = User(username, email)
+	new_user.set_password(password)
+	users_collection.append(new_user.serialize())
+	return jsonify({"message": f"hello {username}. Your account has been created"}), 201
 
 
-@app.route('/logout', methods=['POST'])
+@app.route('/auth/logout', methods=['POST'])
 def api_logout():
-	pass
+	email = request.json.get("user_email")
+	username = request.json.get('user_name')
+
+	user = next(filter(lambda x: x["user_name"] == username and x['user_email'] == email, users_collection), None)
+
+	if user is None:
+		return jsonify({"message": "User does not exist"}), 404
+
+	users_collection.pop(user)
+
+	return jsonify({'message': "user logged out"})
 
 
 @app.route('/reset-password', methods=['POST'])
